@@ -9,13 +9,14 @@ function initSocket(port: number) {
   return socket
 }
 
-export const drone = initSocket(PORTS.command)
-export const droneState = initSocket(PORTS.state)
-
-export function sendDroneCommand(message: string) {
-  drone.send(message, 0, message.length, PORTS.command, HOST)
-}
-
 export function initDrone() {
-  sendDroneCommand("command")
+  const drone = initSocket(PORTS.command)
+  const droneState = initSocket(PORTS.state)
+  const droneVideo = initSocket(PORTS.video)
+
+  const sendCommand = (message: string) => {
+    drone.send(message, 0, message.length, PORTS.command, HOST)
+  }
+
+  return { drone, droneState, droneVideo, sendCommand }
 }

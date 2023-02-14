@@ -15,6 +15,9 @@ module.exports = {
   resolve: {
     extensions: [".tsx", ".ts", ".js"],
   },
+  externals: {
+    jmuxer: "JMuxer",
+  },
   output: {
     filename: "bundle.js",
     path: path.resolve(__dirname, "public"),
