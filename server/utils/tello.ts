@@ -10,15 +10,13 @@ type TelloConfig = {
 
 interface TelemetryEvent {
   type: "telemetry"
-  telemetry: string
+  data: string
 }
 
 interface VideoEvent {
   type: "video"
   rawData: Buffer
 }
-
-type TelloEvent = TelemetryEvent | VideoEvent
 
 interface TelloEventMap {
   telemetry: TelemetryEvent
@@ -46,7 +44,7 @@ export class Tello {
     this.telemetrySocket.on("message", (msg: Buffer) => {
       this.emitSafe("telemetry", {
         type: "telemetry",
-        telemetry: msg.toString(),
+        data: msg.toString(),
       })
     })
 
@@ -92,6 +90,24 @@ export class Tello {
 
   private emitSafe<K extends keyof TelloEventMap>(type: K, event: TelloEventMap[K]) {
     this.eventEmitter.emit(type, event)
+  }
+}
+
+class VideoUtils {
+  static FRAME_START = 0x00
+  static KEY_FRAME = 0x80
+
+  static isFrameStart(buf: Buffer) {
+    return buf.readUInt8(1) === VideoUtils.FRAME_START
+  }
+
+  static isFrameEnd(buf: Buffer) {
+    const subSequence = buf.readUInt8(1)
+    return subSequence >> 4 === 8 && (subSequence & 0x0f) > 0
+  }
+
+  static isKeyframe(buf: Buffer) {
+    return buf.readUInt8(1) === VideoUtils.KEY_FRAME
   }
 }
 

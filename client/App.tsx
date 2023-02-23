@@ -5,14 +5,16 @@ import JMuxer from "jmuxer"
 const socket = io()
 
 const App: React.FC = () => {
-  const [isConnected, setIsConnected] = useState<boolean>(socket.connected)
-  const [lastTime, setLastTime] = useState<string>()
+  const [_isConnected, setIsConnected] = useState<boolean>(socket.connected)
   const [telemetry, setTelemetry] = useState<{ [id: string]: number }>()
   const videoRef = useRef<HTMLVideoElement>(null)
 
-  const handleClick = useCallback(() => {
-    socket.emit("command", { command: "takeoff" })
-  }, [])
+  const sendCommand = useCallback(
+    (command: string) => () => {
+      socket.emit("command", { command })
+    },
+    []
+  )
 
   useEffect(() => {
     if (videoRef.current == null) {
@@ -23,6 +25,7 @@ const App: React.FC = () => {
       node: videoRef.current,
       mode: "video",
       flushingTime: 500,
+      // debug: true,
     })
 
     socket.on("connect", () => {
@@ -33,17 +36,11 @@ const App: React.FC = () => {
       setIsConnected(false)
     })
 
-    socket.on("time", ({ time }) => {
-      setLastTime(time)
-    })
-
     socket.on("telemetry", (payload) => {
-      console.log("telemetry: ", payload)
       setTelemetry(parseTelemetry(payload.telemetry))
     })
 
     socket.on("video", (payload) => {
-      console.log("video: ", payload)
       jmuxer.feed({ video: new Uint8Array(payload.video) })
     })
 
@@ -53,7 +50,7 @@ const App: React.FC = () => {
   }, [])
 
   return (
-    <div className="mx-auto p-6 max-w-4xl min-h-screen">
+    <div className="mx-auto p-4 max-w-4xl min-h-screen">
       {/* header */}
       <div className="mb-8 flex flex-col items-center justify-center gap-2">
         <img src="/goose.png" width="80" height="48" />
@@ -61,10 +58,10 @@ const App: React.FC = () => {
         <div className="w-10 border-t-4 border-gray-900" />
       </div>
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-3 gap-8">
         {/* video + controls */}
         <div className="col-span-2">
-          <div className="aspect-ratio aspect-ratio--6x4">
+          <div className="aspect-ratio aspect-ratio--4x3">
             <video
               className="aspect-ratio--object bg-gray-900 rounded-lg shadow-lg"
               ref={videoRef}
@@ -76,33 +73,37 @@ const App: React.FC = () => {
 
           <div className="mt-8 flex gap-4 items-center">
             <div className="w-1/4 flex flex-col gap-5 items-center">
-              <Button className="px-5 py-4 w-full">take off</Button>
-              <Button className="px-5 py-3 w-full">land</Button>
+              <Button className="px-5 py-4 w-full" onClick={sendCommand("takeoff")}>
+                take off
+              </Button>
+              <Button className="px-5 py-3 w-full" onClick={sendCommand("land")}>
+                land
+              </Button>
             </div>
             <div className="w-3/4 flex gap-4 justify-evenly">
               <div className="flex flex-col items-center">
                 <div>
-                  <IconButton type="UP" />
+                  <IconButton type="UP" onClick={sendCommand("up 50")} />
                 </div>
                 <div className="flex gap-10">
-                  <IconButton type="ROTATE_LEFT" />
-                  <IconButton type="ROTATE_RIGHT" />
+                  <IconButton type="ROTATE_LEFT" onClick={sendCommand("ccw 360")} />
+                  <IconButton type="ROTATE_RIGHT" onClick={sendCommand("cw 360")} />
                 </div>
                 <div>
-                  <IconButton type="DOWN" />
+                  <IconButton type="DOWN" onClick={sendCommand("down 50")} />
                 </div>
               </div>
 
               <div className="flex flex-col items-center">
                 <div>
-                  <IconButton type="FORWARD" />
+                  <IconButton type="FORWARD" onClick={sendCommand("forward 50")} />
                 </div>
                 <div className="flex gap-10">
-                  <IconButton type="LEFT" />
-                  <IconButton type="RIGHT" />
+                  <IconButton type="LEFT" onClick={sendCommand("left 50")} />
+                  <IconButton type="RIGHT" onClick={sendCommand("right 50")} />
                 </div>
                 <div>
-                  <IconButton type="BACK" />
+                  <IconButton type="BACK" onClick={sendCommand("back 50")} />
                 </div>
               </div>
             </div>
@@ -194,9 +195,6 @@ function parseTelemetry(payload: string) {
 function classNames(...classes: (string | undefined)[]) {
   return classes.filter(Boolean).join(" ")
 }
-
-const SAMPLE_TELEMETRY =
-  "pitch:-7;roll:-124;yaw:33;vgx:0;vgy:0;vgz:-1;templ:44;temph:46;tof:333;h:0;bat:85;baro:606.56;time:0;agx:-117.00;agy:857.00;agz:443.00;"
 
 const METRICS: { id: string; name: string; fmt: (x: number) => string }[] = [
   { id: "pitch", name: "Pitch", fmt: (x) => `${x}°` },

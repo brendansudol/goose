@@ -18,10 +18,6 @@ app.get("/", (_req, res) => {
   res.send("index.html")
 })
 
-app.get("/ping", (_req, res) => {
-  return res.json({ ping: "pong!" })
-})
-
 io.on("connection", (socket) => {
   console.log("socket connected!")
 
@@ -33,7 +29,7 @@ io.on("connection", (socket) => {
 tello.addListener(
   "telemetry",
   throttle((event) => {
-    io.emit("telemetry", { telemetry: event.telemetry })
+    io.emit("telemetry", { telemetry: event.data })
   }, 50)
 )
 
