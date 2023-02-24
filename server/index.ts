@@ -10,7 +10,7 @@ const server = http.createServer(app)
 const io = new Server(server)
 
 const tello = new Tello()
-tello.start().catch((err) => console.log("error during tello init", err))
+tello.start().catch(() => console.log("error during tello startup"))
 
 app.use(express.static(path.join(__dirname, "../public")))
 
@@ -19,10 +19,11 @@ app.get("/", (_req, res) => {
 })
 
 io.on("connection", (socket) => {
-  console.log("socket connected!")
-
-  socket.on("command", (payload) => {
-    tello.send(payload.command)
+  socket.on("command", ({ command }) => {
+    tello
+      .send(command)
+      .then((response) => console.log(`"${command}" success: ${response}}`))
+      .catch((error) => console.log(`"${command}" error: ${error}`))
   })
 })
 

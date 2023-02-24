@@ -79,7 +79,7 @@ export class Tello {
 
       const timeoutId = setTimeout(() => {
         reject(`timeout for command "${command}"`)
-      }, 3_000)
+      }, 5_000)
 
       this.commandSocket.once("message", (msg) => {
         clearTimeout(timeoutId)

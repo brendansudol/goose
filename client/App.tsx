@@ -5,7 +5,6 @@ import JMuxer from "jmuxer"
 const socket = io()
 
 const App: React.FC = () => {
-  const [_isConnected, setIsConnected] = useState<boolean>(socket.connected)
   const [telemetry, setTelemetry] = useState<{ [id: string]: number }>()
   const videoRef = useRef<HTMLVideoElement>(null)
 
@@ -25,15 +24,10 @@ const App: React.FC = () => {
       node: videoRef.current,
       mode: "video",
       flushingTime: 500,
-      // debug: true,
     })
 
     socket.on("connect", () => {
-      setIsConnected(true)
-    })
-
-    socket.on("disconnect", () => {
-      setIsConnected(false)
+      console.log("socket connected!")
     })
 
     socket.on("telemetry", (payload) => {
@@ -51,26 +45,23 @@ const App: React.FC = () => {
 
   return (
     <div className="mx-auto p-4 max-w-4xl min-h-screen">
-      {/* header */}
       <div className="mb-8 flex flex-col items-center justify-center gap-2">
         <img src="/goose.png" width="80" height="48" />
         <div className="text-xl font-bold">goose</div>
         <div className="w-10 border-t-4 border-gray-900" />
       </div>
-
-      <div className="grid grid-cols-3 gap-8">
-        {/* video + controls */}
+      <div className="grid grid-cols-3 gap-8 items-start">
         <div className="col-span-2">
           <div className="aspect-ratio aspect-ratio--4x3">
             <video
               className="aspect-ratio--object bg-gray-900 rounded-lg shadow-lg"
-              ref={videoRef}
+              // ref={videoRef}
+              src="/karma.mp4"
               autoPlay
               loop
               muted
             />
           </div>
-
           <div className="mt-8 flex gap-4 items-center">
             <div className="w-1/4 flex flex-col gap-5 items-center">
               <Button className="px-5 py-4 w-full" onClick={sendCommand("takeoff")}>
@@ -86,8 +77,8 @@ const App: React.FC = () => {
                   <IconButton type="UP" onClick={sendCommand("up 50")} />
                 </div>
                 <div className="flex gap-10">
-                  <IconButton type="ROTATE_LEFT" onClick={sendCommand("ccw 360")} />
-                  <IconButton type="ROTATE_RIGHT" onClick={sendCommand("cw 360")} />
+                  <IconButton type="ROTATE_LEFT" onClick={sendCommand("ccw 45")} />
+                  <IconButton type="ROTATE_RIGHT" onClick={sendCommand("cw 45")} />
                 </div>
                 <div>
                   <IconButton type="DOWN" onClick={sendCommand("down 50")} />
@@ -109,30 +100,18 @@ const App: React.FC = () => {
             </div>
           </div>
         </div>
-
-        {/* telemetry sidebar */}
-        <div>
-          <div className="grid grid-cols-1 divide-y divide-gray-900">
-            {METRICS.map((metric) => (
-              <div key={metric.id} className="py-1.5 flex items-center justify-between gap-2">
-                <div className="text-sm font-medium">{metric.name}</div>
-                <div className="text-sm font-bold">
-                  {telemetry == null || telemetry[metric.id] == null
-                    ? "--"
-                    : metric.fmt(telemetry[metric.id])}
-                </div>
+        <div className="grid grid-cols-1 divide-y divide-gray-900">
+          {METRICS.map((metric) => (
+            <div key={metric.id} className="py-2 flex items-center justify-between gap-2">
+              <div className="text-sm font-medium">{metric.name}</div>
+              <div className="text-sm font-bold">
+                {telemetry == null || telemetry[metric.id] == null
+                  ? "--"
+                  : metric.fmt(telemetry[metric.id])}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
-      </div>
-
-      {/* footer */}
-      <div className="mt-12 mb-4 w-14 border-t-4 border-gray-900" />
-      <div className="text-sm">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed euismod, nisl nec ultricies
-        lacinia, nunc nisl. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed euismod,
-        nisl nec ultricies lacinia, nunc nisl.
       </div>
     </div>
   )
